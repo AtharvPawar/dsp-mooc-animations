@@ -1,3 +1,6 @@
+"""
+This code is use to plot frequency response
+"""
 from manimlib.imports import *
 import math
 
