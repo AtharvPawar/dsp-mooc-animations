@@ -1,5 +1,5 @@
 """
-This code is use to plot frequency response
+This code is used to plot frequency response
 """
 from manimlib.imports import *
 import math
