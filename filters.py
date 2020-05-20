@@ -8,9 +8,10 @@ def chebyschev_polynomial(x, N):
 	if x < 1 and x >= -1:
 		return math.cos(N * math.acos(x))
 	elif x < -1:
-		# TODO
-		raise ValueError()
-		return None
+		if N % 2 == 0:
+			return math.cosh(N * math.acosh(-x))
+		else:
+			return -math.cosh(N * math.acosh(-x))
 	else:
 		return math.cosh(N * math.acosh(x))
 
@@ -30,12 +31,10 @@ def chebyschev_lowpass(f_pass, f_stop, tol_pass, tol_stop):
 	"""
 
 	if f_pass == f_stop:
-		# TODO
-		raise ValueError()
+		raise ValueError('The passband and stopband frequencies cannot be equal.')
 
 	if tol_pass == 0 or tol_stop == 0:
-		# TODO
-		raise ValueError()
+		raise ValueError('Tolerance values cannot be zero.')
 
 	D1 = 1 / (1 - tol_pass)**2 - 1
 	D2 = 1 / tol_stop**2 - 1
