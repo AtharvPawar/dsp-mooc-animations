@@ -105,15 +105,20 @@ class chebyschev(Scene):
                     "unit_size": 3,
                     # "tick_frequency": 1,
                     "include_tip": False,
-                    "label_direction": DOWN,
+                    "label_direction": DOWN+RIGHT,
                     "include_ticks": False
                 },
                 y_axis_config={
                     "unit_size": 3,
                     # "tick_frequency": 1,
                     "include_tip": False,
+                    "label_direction": UP+LEFT,
                     "include_ticks": False
                 })
+        axis_labels = VGroup(
+            axes1.get_x_axis_label("\\Omega", direction=0.5*DR),
+            axes1.get_y_axis_label("H(\\Omega)", direction=0.5*UL)
+            )
 
         # defining tick marks mobjects
         f_pass_tick = axes1.get_x_axis().get_tick(1.0)
@@ -144,23 +149,76 @@ class chebyschev(Scene):
         epsilon = ValueTracker(epsilon_max)
         N = ValueTracker(N_min)
 
-        filter_graph = axes1.get_graph(get_filter(epsilon=epsilon.get_value(), N=N.get_value()), color=YELLOW)
+        # create odometers for N and epsilon
+        epsilon_text = TexMobject("\\epsilon = ")
+        epsilon_val = DecimalNumber(epsilon.get_value(), num_decimal_places=3, color=GREEN)
+        epsilon_val.add_updater(lambda mob: mob.set_value(epsilon.get_value()))
+        epsilon_group = VGroup(epsilon_text, epsilon_val)
+        epsilon_group.arrange(RIGHT, aligned_edge=DOWN)
+
+        N_text = TexMobject("N = ")
+        N_val = DecimalNumber(N.get_value(), num_decimal_places=0, color=BLUE)
+        N_val.add_updater(lambda mob: mob.set_value(math.floor(N.get_value())))
+        N_group = VGroup(N_text, N_val)
+        N_group.arrange(RIGHT, aligned_edge=DOWN)
+
+        odo_group = VGroup(epsilon_group, N_group)
+        odo_group.arrange(RIGHT, aligned_edge=DOWN, buff=LARGE_BUFF)
+        odo_group.move_to(3.25*DOWN)
+
+        filter_graph = axes1.get_graph(get_filter(
+            epsilon=epsilon.get_value(),
+            N=N.get_value()),
+        stroke_width = DEFAULT_STROKE_WIDTH * 0.6,
+        color=YELLOW)
+
+         # create rectangles highlighting the valid region
+        passband_region = Rectangle(
+            width = 1 * axes1.get_x_axis().unit_size,
+            height = 2 * 1.1 * (tol_pass * axes1.get_y_axis().unit_size),
+            fill_color=GREEN,
+            fill_opacity=0.5,
+            background_stroke_color=GREEN,
+            background_stroke_opacity = 0.5,
+            stroke_opacity=0
+            # stroke_width=0.0
+            )
+        stopband_region = Rectangle(
+            width = (axes1.x_max - f_stop / f_pass) * axes1.get_x_axis().unit_size,
+            height = tol_stop * axes1.get_y_axis().unit_size,
+            fill_color=GREEN,
+            fill_opacity=0.5,
+            background_stroke_color=GREEN,
+            background_stroke_opacity = 0.5,
+            stroke_opacity=0
+            # stroke_width=0.0
+            )
+        passband_region.align_to(tol_pass_tick, direction=DOWN)
+        passband_region.align_to(axes1.get_x_axis(), direction=LEFT)
+        stopband_region.align_to(f_stop_tick, direction=LEFT)
+        stopband_region.align_to(axes1.get_y_axis(), direction=DOWN)
 
         # plot the filter function now
+        self.play(ShowCreation(axes1), ShowCreation(axis_labels))
+
         self.play(
-            ShowCreation(axes1),
             ShowCreation(ticks1),
-            ShowCreation(mobs1)
+            ShowCreation(mobs1),
+            ShowCreation(odo_group)
             )
 
         self.wait(0.1)
         
+        self.play(
+            ShowCreation(passband_region),
+            ShowCreation(stopband_region),
+            )
         self.play(ShowCreation(filter_graph))
 
         # now we add updater for the graph
         filter_graph.add_updater(
             lambda mob: mob.become(axes1.get_graph( get_filter( epsilon=epsilon.get_value(), N=N.get_value() ),
-                color=YELLOW) ),
+                color=YELLOW, stroke_width = DEFAULT_STROKE_WIDTH * 0.6) ),
             )
 
         # now we show the variation in the filter function with epsilon and N
