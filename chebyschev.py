@@ -51,7 +51,7 @@ def chebyschev_lowpass(f_pass, f_stop, tol_pass, tol_stop):
 
     def filter_func(f):
         # Note that D1 is the same as epsilon**2
-        mag2 = 1 / (1 + D1*chebyshev_polynomial(f / f_pass, N))
+        mag2 = 1 / (1 + D1*chebyshev_polynomial(f / f_pass, N)**2)
         return math.sqrt(mag2)
 
     return filter_func
@@ -80,31 +80,82 @@ class chebyschev(Scene):
         epsilon_max = math.sqrt(1 / (1 - tol_pass)**2 - 1)
         D2 = 1 / tol_stop**2 - 1
 
-        N_min = math.acosh(D2 / epsilon_max**2) / math.acosh(f_stop / f_pass)
+        N_min = math.acosh(math.sqrt(D2) / epsilon_max) / math.acosh(f_stop / f_pass)
         N_min = math.ceil(N_min)
 
         # define a function to get minimum required filter order N (non integral value)
         def get_N(epsilon, D2, f_ratio):
-            return math.acosh(D2 / epsilon**2) / math.acosh(f_ratio)
+            return math.acosh(math.sqrt(D2) / epsilon) / math.acosh(f_ratio)
 
         # define a function to get filter function corresponding to an epsilon and N
         def get_filter(epsilon, N):
-            return lambda x: math.sqrt(1 / (1 + epsilon**2 * chebyschev_polynomial(x, N)))
+            return lambda x: math.sqrt(1 / (1 + (epsilon * chebyschev_polynomial(x, N))**2))
 
         ####
 
         text1 = TextMobject("\\textsc{Chebyschev Magnitude Filter Function \\\\ and its Parameters}")
         
         self.play(ShowCreation(text1))
-        self.wait(1.5)
 
+        self.wait(1.5)
+        self.clear()
+
+        text2 = TextMobject("Consider the following filter specifications:")
+
+        specs = TextMobject("\\rm\\begin{align*} \\text{Passband Edge} &= \\Omega_P = \\text{10 kHz}\\\\\
+            \\text{Stopband Edge} &= \\Omega_S = \\text{12 kHz}\\\\\
+            \\text{Passband Tolerance} &= \\delta_1 = \\text{0.05}\\\\\
+            \\text{Stopband Tolerance} &= \\delta_2 = \\text{0.05}\\end{align*}")
+
+        specs_group = VGroup(text2, specs)
+        specs_group.arrange(DOWN)
+
+        self.play(Write(specs_group))
+
+        self.wait(4)
+        self.clear()
+
+        text3_1 = TextMobject("The Chebyschev magnitude filter\\\\ function is given by:")
+        text3_2 = TexMobject("H^2(\\Omega)", " = \\dfrac{1}{1 + \\epsilon^2\\, C^2_N({\\Omega \\over \\Omega_P})}")
+        text3_2[0].set_color(YELLOW)
+        text3_3 = TextMobject("where, $C_N(\\cdot)$ is the $N$th order\\\\ Chebyschev polynomial")
+        text3 = VGroup(text3_1, text3_2, text3_3)
+        text3.arrange(DOWN)
+
+        self.play(Write(text3))
+
+        self.wait(4)
+        self.clear()
+
+        text4_1 = TextMobject("To satisfy tolerance requirements, we must have:")
+        text4_2 = TexMobject("\\epsilon^2", "\\le \\frac{1}{(1-\\delta_1)^2} - 1")
+        text4_2[0].set_color(GREEN)
+        text4_3 = TexMobject("N", "\\ge \
+            \\dfrac{ \\cosh^{-1} \\left( \\frac{1}{\\epsilon}\\sqrt{\\frac{1}{\\delta^2} - 1} \\right) }{\
+            \\cosh^{-1}(\\Omega_S / \\Omega_P)}")
+        text4_3[0].set_color(BLUE)
+        text4 = VGroup(text4_1, text4_2, text4_3)
+        text4.arrange(DOWN)
+
+        self.play(Write(text4))
+
+        self.wait(4)
+        self.clear()
+
+        text5 = TextMobject(f"For our specifications, $\\epsilon_{{\\rm max}} = {epsilon_max:.3f}$. \\\\"
+            "Then the minimum required order of the \\\\ Chebyschev polynomial, $N_{\\rm min}$, "
+            "can be plotted as follows.")
+
+        self.play(Write(text5))
+
+        self.wait(4)
         self.clear()
 
         ####
 
-        x_min1, x_max1 = 0, 1
-        y_min1, y_max1 = 0, 30
-        x_us1, y_us1 = 9, 0.2
+        x_min1, x_max1 = 0, epsilon_max
+        y_min1, y_max1 = 0, 15
+        x_us1, y_us1 = 20, 0.5
 
         axes1 = Axes(
                 x_min = x_min1,
@@ -113,12 +164,12 @@ class chebyschev(Scene):
                 y_max = y_max1,
                 x_axis_label = "\\epsilon",
                 y_axis_label = "N_{\\rm min}",
-                x_labelled_nums = np.linspace(0.1, 1.0, 10),
-                y_labelled_nums = np.arange(y_min1+5, y_max1, 5),
+                x_labelled_nums = np.arange(0.0, x_max1, 0.05),
+                y_labelled_nums = np.arange(y_min1+2, y_max1, 2),
                 center_point = x_us1 * (x_min1 + x_max1) / 2 * LEFT + y_us1 * (y_min1 + y_max1) / 2 * DOWN,
                 x_axis_config={
                     "unit_size": x_us1,
-                    "tick_frequency": 0.1,
+                    "tick_frequency": 0.05,
                     "include_tip": False,
                     "label_direction": DOWN+RIGHT,
                     "include_ticks": True,
@@ -128,14 +179,14 @@ class chebyschev(Scene):
                 },
                 y_axis_config={
                     "unit_size": y_us1,
-                    "tick_frequency": 5,
+                    "tick_frequency": 2,
                     "include_tip": False,
                     "label_direction": UP+LEFT,
                     "include_ticks": True,
                 })
 
         axis_labels1 = VGroup(
-            axes1.get_x_axis_label("\\epsilon", direction=UR),
+            axes1.get_x_axis_label("\\epsilon", direction=UR*0.5),
             axes1.get_y_axis_label("N_{\\rm min}", direction=LEFT)
             )
         coord_labels1 = VGroup(
@@ -152,9 +203,18 @@ class chebyschev(Scene):
         self.play(ShowCreation(N_vs_epsilon_graph))
 
         self.wait(5)
+        self.clear()
 
+        text6 = TextMobject("We can also see the filter magnitude \\\\ \
+            function and how it changes on \\\\ independently \
+            varying $\\epsilon$ and $N$", tex_to_color_map={"$\\epsilon$":GREEN, "$N$":BLUE})
 
-        ####
+        self.play(Write(text6))
+        self.wait(3)
+
+        self.clear()
+
+        # ####
 
         x_min2, x_max2 = 0, 2
         y_min2, y_max2 = 0, 1.5
@@ -245,7 +305,7 @@ class chebyschev(Scene):
          # create rectangles highlighting the valid region
         passband_region = Rectangle(
             width = 1 * axes2.get_x_axis().unit_size,
-            height = 2 * 1.1 * (tol_pass * axes2.get_y_axis().unit_size),
+            height = tol_pass * axes2.get_y_axis().unit_size,
             fill_color=GREEN,
             fill_opacity=0.5,
             background_stroke_color=GREEN,
@@ -269,7 +329,7 @@ class chebyschev(Scene):
         stopband_region.align_to(axes2.get_y_axis(), direction=DOWN)
 
         # plot the filter function now
-        self.play(ShowCreation(axes2), ShowCreation(axis_labels))
+        self.play(ShowCreation(axes2), ShowCreation(axis_labels2))
 
         self.play(
             ShowCreation(ticks1),
@@ -296,30 +356,35 @@ class chebyschev(Scene):
             epsilon.set_value, epsilon_max / 100,
             rate_func=linear,
             run_time=5)
+        self.wait(2)
 
         self.play(
             epsilon.set_value, epsilon_max,
             rate_func=linear,
             run_time=2)
+        self.wait(2)
 
         self.play(
             N.set_value, N_min * 2,
             rate_func=linear,
             run_time=5)
+        self.wait(2)
 
         self.play(
             N.set_value, N_min,
             rate_func=linear,
             run_time=2)
+        self.wait(2)
 
         self.play(
             N.set_value, N_min // 2,
             rate_func=linear,
             run_time=5)
+        self.wait(2)
 
         self.play(
             N.set_value, N_min,
             rate_func=linear,
             run_time=2)
 
-        self.wait(2)
+        self.wait(5)
