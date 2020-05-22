@@ -91,42 +91,112 @@ class chebyschev(Scene):
         def get_filter(epsilon, N):
             return lambda x: math.sqrt(1 / (1 + epsilon**2 * chebyschev_polynomial(x, N)))
 
+        ####
+
+        text1 = TextMobject("\\textsc{Chebyschev Magnitude Filter Function \\\\ and its Parameters}")
+        
+        self.play(ShowCreation(text1))
+        self.wait(1.5)
+
+        self.clear()
+
+        ####
+
+        x_min1, x_max1 = 0, 1
+        y_min1, y_max1 = 0, 30
+        x_us1, y_us1 = 9, 0.2
+
         axes1 = Axes(
-                x_min = 0,
-                x_max = 2,
-                y_min = 0,
-                y_max = 1.5,
+                x_min = x_min1,
+                x_max = x_max1,
+                y_min = y_min1,
+                y_max = y_max1,
+                x_axis_label = "\\epsilon",
+                y_axis_label = "N_{\\rm min}",
+                x_labelled_nums = np.linspace(0.1, 1.0, 10),
+                y_labelled_nums = np.arange(y_min1+5, y_max1, 5),
+                center_point = x_us1 * (x_min1 + x_max1) / 2 * LEFT + y_us1 * (y_min1 + y_max1) / 2 * DOWN,
+                x_axis_config={
+                    "unit_size": x_us1,
+                    "tick_frequency": 0.1,
+                    "include_tip": False,
+                    "label_direction": DOWN+RIGHT,
+                    "include_ticks": True,
+                    "decimal_number_config": {
+                        "num_decimal_places": 1,
+                    },
+                },
+                y_axis_config={
+                    "unit_size": y_us1,
+                    "tick_frequency": 5,
+                    "include_tip": False,
+                    "label_direction": UP+LEFT,
+                    "include_ticks": True,
+                })
+
+        axis_labels1 = VGroup(
+            axes1.get_x_axis_label("\\epsilon", direction=UR),
+            axes1.get_y_axis_label("N_{\\rm min}", direction=LEFT)
+            )
+        coord_labels1 = VGroup(
+            axes1.get_x_axis().get_number_mobjects(*axes1.x_labelled_nums.tolist(), scale_val=0.6, direction=DOWN),
+            axes1.get_y_axis().get_number_mobjects(*axes1.y_labelled_nums.tolist(), scale_val=0.7, direction=LEFT)
+            )
+
+        N_vs_epsilon_graph = axes1.get_graph(
+            lambda x: get_N(x, D2, f_stop / f_pass),
+            stroke_width = DEFAULT_STROKE_WIDTH,
+            color=BLUE)
+
+        self.play(ShowCreation(axes1), ShowCreation(axis_labels1), ShowCreation(coord_labels1))
+        self.play(ShowCreation(N_vs_epsilon_graph))
+
+        self.wait(5)
+
+
+        ####
+
+        x_min2, x_max2 = 0, 2
+        y_min2, y_max2 = 0, 1.5
+        x_us2, y_us2 = 3, 3
+
+        axes2 = Axes(
+                x_min = x_min2,
+                x_max = x_max2,
+                y_min = y_min2,
+                y_max = y_max2,
                 y_axis_label = "$H(\\Omega)$",
                 x_axis_label = "$\\Omega$",
                 # x_labelled_nums = [1, f_stop / f_pass],
                 # y_labelled_nums = [tol_stop, 1-tol_pass],
-                center_point = 2.25*DOWN+3*LEFT,
+                center_point = x_us2 * (x_min2 + x_max2) / 2 * LEFT + y_us2 * (y_min2 + y_max2) / 2 * DOWN,
                 x_axis_config={
-                    "unit_size": 3,
+                    "unit_size": x_us2,
                     # "tick_frequency": 1,
                     "include_tip": False,
                     "label_direction": DOWN+RIGHT,
-                    "include_ticks": False
+                    "include_ticks": False,
                 },
                 y_axis_config={
-                    "unit_size": 3,
+                    "unit_size": y_us2,
                     # "tick_frequency": 1,
                     "include_tip": False,
                     "label_direction": UP+LEFT,
-                    "include_ticks": False
+                    "include_ticks": False,
                 })
-        axis_labels = VGroup(
-            axes1.get_x_axis_label("\\Omega", direction=0.5*DR),
-            axes1.get_y_axis_label("H(\\Omega)", direction=0.5*UL)
+
+        axis_labels2 = VGroup(
+            axes2.get_x_axis_label("\\Omega", direction=0.5*DR),
+            axes2.get_y_axis_label("H(\\Omega)", direction=0.5*UL)
             )
 
         # defining tick marks mobjects
-        f_pass_tick = axes1.get_x_axis().get_tick(1.0)
-        f_stop_tick = axes1.get_x_axis().get_tick(f_stop / f_pass)
+        f_pass_tick = axes2.get_x_axis().get_tick(1.0)
+        f_stop_tick = axes2.get_x_axis().get_tick(f_stop / f_pass)
 
-        tol_stop_tick = axes1.get_y_axis().get_tick(tol_stop)
-        tol_pass_tick = axes1.get_y_axis().get_tick(1 - tol_pass)
-        unity_tick = axes1.get_y_axis().get_tick(1.0)
+        tol_stop_tick = axes2.get_y_axis().get_tick(tol_stop)
+        tol_pass_tick = axes2.get_y_axis().get_tick(1 - tol_pass)
+        unity_tick = axes2.get_y_axis().get_tick(1.0)
 
         ticks1 = VGroup(f_pass_tick, f_stop_tick, tol_pass_tick, tol_stop_tick, unity_tick)
 
@@ -166,7 +236,7 @@ class chebyschev(Scene):
         odo_group.arrange(RIGHT, aligned_edge=DOWN, buff=LARGE_BUFF)
         odo_group.move_to(3.25*DOWN)
 
-        filter_graph = axes1.get_graph(get_filter(
+        filter_graph = axes2.get_graph(get_filter(
             epsilon=epsilon.get_value(),
             N=N.get_value()),
         stroke_width = DEFAULT_STROKE_WIDTH * 0.6,
@@ -174,8 +244,8 @@ class chebyschev(Scene):
 
          # create rectangles highlighting the valid region
         passband_region = Rectangle(
-            width = 1 * axes1.get_x_axis().unit_size,
-            height = 2 * 1.1 * (tol_pass * axes1.get_y_axis().unit_size),
+            width = 1 * axes2.get_x_axis().unit_size,
+            height = 2 * 1.1 * (tol_pass * axes2.get_y_axis().unit_size),
             fill_color=GREEN,
             fill_opacity=0.5,
             background_stroke_color=GREEN,
@@ -184,8 +254,8 @@ class chebyschev(Scene):
             # stroke_width=0.0
             )
         stopband_region = Rectangle(
-            width = (axes1.x_max - f_stop / f_pass) * axes1.get_x_axis().unit_size,
-            height = tol_stop * axes1.get_y_axis().unit_size,
+            width = (axes2.x_max - f_stop / f_pass) * axes2.get_x_axis().unit_size,
+            height = tol_stop * axes2.get_y_axis().unit_size,
             fill_color=GREEN,
             fill_opacity=0.5,
             background_stroke_color=GREEN,
@@ -194,12 +264,12 @@ class chebyschev(Scene):
             # stroke_width=0.0
             )
         passband_region.align_to(tol_pass_tick, direction=DOWN)
-        passband_region.align_to(axes1.get_x_axis(), direction=LEFT)
+        passband_region.align_to(axes2.get_x_axis(), direction=LEFT)
         stopband_region.align_to(f_stop_tick, direction=LEFT)
-        stopband_region.align_to(axes1.get_y_axis(), direction=DOWN)
+        stopband_region.align_to(axes2.get_y_axis(), direction=DOWN)
 
         # plot the filter function now
-        self.play(ShowCreation(axes1), ShowCreation(axis_labels))
+        self.play(ShowCreation(axes2), ShowCreation(axis_labels))
 
         self.play(
             ShowCreation(ticks1),
@@ -217,7 +287,7 @@ class chebyschev(Scene):
 
         # now we add updater for the graph
         filter_graph.add_updater(
-            lambda mob: mob.become(axes1.get_graph( get_filter( epsilon=epsilon.get_value(), N=N.get_value() ),
+            lambda mob: mob.become(axes2.get_graph( get_filter( epsilon=epsilon.get_value(), N=N.get_value() ),
                 color=YELLOW, stroke_width = DEFAULT_STROKE_WIDTH * 0.6) ),
             )
 
